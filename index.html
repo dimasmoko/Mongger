@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0591e8">
+<title>Financial Engine V15</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0c101d;
+  --cyan: #0591e8;
+  --pink: #fb036b;
+  --white: #ffffff;
+  --slate: #a6aed5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 14px;
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+}
+.container {
+  max-width: 430px;
+  margin: 0 auto;
+}
+h1 {
+  color: var(--cyan);
+  margin: 0 0 20px 0;
+  font-size: 24px;
+}
+.panel {
+  background: rgba(5, 145, 232, 0.1);
+  border: 1px solid rgba(5, 145, 232, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.label {
+  color: var(--slate);
+  font-size: 10px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+input, select {
+  width: 100%;
+  background: rgba(12, 16, 29, 0.7);
+  border: 1px solid rgba(5, 145, 232, 0.3);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+button {
+  width: 100%;
+  background: linear-gradient(135deg, #0466de, var(--cyan));
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 8px;
+}
+button:active {
+  opacity: 0.8;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.success { color: #1fd1a3; }
+.error { color: var(--pink); }
+.info { color: var(--slate); }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>💰 Financial Engine V15</h1>
+
+<div class="panel">
+  <div class="label">👤 Nama Pengguna</div>
+  <input type="text" id="userName" placeholder="Masukkan nama Anda" value="">
+  <button onclick="saveName()">Simpan Nama</button>
+</div>
+
+<div class="panel">
+  <div class="label">📅 Tanggal Hari Ini</div>
+  <div class="value" id="todayDate"></div>
+</div>
+
+<div class="panel">
+  <div class="label">💵 Saldo Uang</div>
+  <input type="number" id="balance" placeholder="Rp 0" value="0">
+  <button onclick="updateBalance()">Update Saldo</button>
+  <div id="balanceDisplay" class="value"></div>
+</div>
+
+<div class="panel">
+  <div class="label">📝 Catat Pengeluaran</div>
+  <input type="text" id="expenseDesc" placeholder="Deskripsi (mis. Makan)">
+  <input type="number" id="expenseAmount" placeholder="Nominal (Rp)">
+  <div class="row">
+    <button onclick="addExpense()">Catat</button>
+    <button onclick="clearData()" style="background: linear-gradient(135deg, #7a0b3a, var(--pink));">Hapus Data</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="label">📜 Riwayat Pengeluaran</div>
+  <div id="history" style="max-height: 200px; overflow-y: auto;"></div>
+</div>
+
+<div class="panel">
+  <div class="info" style="text-align: center;">
+    ✅ Aplikasi Financial Engine V15 sudah loaded!<br>
+    Data tersimpan otomatis di HP Anda.
+  </div>
+</div>
+</div>
+
+<script>
+const STORAGE_KEY = 'financial_engine_v15';
+
+function getState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved ? JSON.parse(saved) : { userName: '', balance: 0, expenses: [] };
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function saveName() {
+  const name = document.getElementById('userName').value.trim();
+  if (!name) { alert('Nama tidak boleh kosong'); return; }
+  const state = getState();
+  state.userName = name;
+  saveState(state);
+  alert('Nama disimpan: ' + name);
+  render();
+}
+
+function updateBalance() {
+  const bal = parseInt(document.getElementById('balance').value) || 0;
+  const state = getState();
+  state.balance = bal;
+  saveState(state);
+  alert('Saldo diupdate');
+  render();
+}
+
+function addExpense() {
+  const desc = document.getElementById('expenseDesc').value.trim();
+  const amt = parseInt(document.getElementById('expenseAmount').value) || 0;
+  if (!desc || !amt) { alert('Deskripsi & nominal harus diisi'); return; }
+  const state = getState();
+  state.expenses.push({ desc, amt, date: new Date().toLocaleString('id-ID') });
+  state.balance -= amt;
+  saveState(state);
+  document.getElementById('expenseDesc').value = '';
+  document.getElementById('expenseAmount').value = '';
+  render();
+}
+
+function clearData() {
+  if (confirm('Hapus SEMUA data?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+    alert('Data dihapus');
+  }
+}
+
+function render() {
+  const state = getState();
+  
+  document.getElementById('userName').value = state.userName;
+  document.getElementById('balance').value = state.balance;
+  document.getElementById('todayDate').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('balanceDisplay').innerText = 'Rp ' + state.balance.toLocaleString('id-ID');
+  
+  const historyHTML = state.expenses.length ? state.expenses.map((e, i) => `
+    <div style="background: rgba(251, 3, 107, 0.1); border: 1px solid rgba(251, 3, 107, 0.2); border-radius: 8px; padding: 8px; margin-bottom: 6px;">
+      <div style="display: flex; justify-content: space-between;">
+        <span>${e.desc}</span>
+        <strong style="color: var(--pink);">-Rp ${e.amt.toLocaleString('id-ID')}</strong>
+      </div>
+      <div style="font-size: 10px; color: var(--slate); margin-top: 4px;">${e.date}</div>
+    </div>
+  `).join('') : '<div class="info">Belum ada pengeluaran</div>';
+  document.getElementById('history').innerHTML = historyHTML;
+}
+
+render();
+</script>
+</body>
+</html>
